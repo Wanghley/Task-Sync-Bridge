@@ -1,0 +1,18 @@
+# Node.js and npm
+node_modules/
+npm-debug.log
+
+# Environment variables
+.env
+
+# IDE and editor files
+.vscode/
+.idea/
+*.iml
+
+# Logs
+logs/
+*.log
+
+# macOS
+.DS_Store
