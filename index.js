@@ -42,10 +42,10 @@ app.get('/auth/google', (req, res) => {
   
   // Redirect to Todoist authentication page
   app.get('/auth/todoist', (req, res) => {
-    const authUrl = todoist.authorizeURL({
-      redirect_uri: process.env.TODOIST_REDIRECT_URI,
-    });
-    res.redirect(authUrl);
+    todoist.getProjects()
+      .then((projects) => console.log(projects))
+      .catch((error) => console.log(error))
+    res.redirect('/');
   });
   
   // Handle Todoist callback
