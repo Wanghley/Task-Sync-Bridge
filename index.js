@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { google } = require('googleapis');
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client, auth } = require('google-auth-library');
 const TodoistAPI = require('@doist/todoist-api-typescript');
 const cron = require('node-cron');
 require('dotenv').config();
@@ -19,6 +19,9 @@ const oauth2Client = new OAuth2Client({
   redirectUri: process.env.GOOGLE_REDIRECT_URI,
 });
 
+// Set up the Google Tasks API
+const tasks = google.tasks({ version: 'v1', auth: oauth2Client });
+
 // Redirect to Google authentication page
 app.get('/auth/google', (req, res) => {
     const authUrl = oauth2Client.generateAuthUrl({
@@ -34,7 +37,8 @@ app.get('/auth/google', (req, res) => {
     try {
       const { tokens } = await oauth2Client.getToken(code);
       oauth2Client.setCredentials(tokens);
-      res.redirect('/auth/todoist');
+      console.log(getTasksFromGoogle());
+      // res.redirect('/auth/todoist');
     } catch (err) {
       res.status(500).send('Error authenticating with Google.');
     }
@@ -61,17 +65,32 @@ app.get('/auth/google', (req, res) => {
   });
 
   async function getTasksFromGoogle() {
-    // Implement this function to fetch tasks from Google Tasks API
-    // Use the oauth2Client to make API requests to Google Tasks
-    // Example code:
-    // const tasks = await google.tasks({ version: 'v1', auth: oauth2Client }).tasks.list({
-    //   tasklist: '@default',
-    // });
-    // return tasks.data.items;
+    const service = google.tasks({version: 'v1', auth: oauth2Client});
+    const res = await service.tasklists.list({
+      maxResults: 10,
+    });
+    const taskLists = res.data.items;
+    const tasks = []
+    taskLists.forEach((tl) => {
+      console.log(tl.id);
+      service.tasks.list({ tasklist: tl.id }, (err, response) => {
+        if (err) {
+          console.error('Error fetching tasks:', err);
+          res.send('Error fetching tasks');
+          return;
+        }
+        const taskres = response.data.items;
+        taskres.forEach((task) => {
+          tasks.push(task);
+          console.log(tasks.length)
+        });
+        return tasks;
+      });
+    });
   }
   
   async function getTasksFromTodoist() {
-    // Implement this function to fetch tasks from Todoist API
+    // TODO: Implement this function to fetch tasks from Todoist API
     // Use the todoist instance to make API requests to Todoist
     // Example code:
     // const tasks = await todoist.sync();
