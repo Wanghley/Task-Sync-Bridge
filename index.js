@@ -64,7 +64,8 @@ app.get('/auth/google', (req, res) => {
   app.get('/auth/todoist/callback', async (req, res) => {
     const code = req.query.code;
     try {
-      getTasksFromTodoist()
+      getTasksFromTodoist();
+      await new Promise(r => setTimeout(r, 1500));
       res.redirect('/sync');
     } catch (err) {
       res.status(500).send('Error authenticating with Todoist.');
@@ -102,8 +103,50 @@ app.get('/auth/google', (req, res) => {
     });
   }
 
-  async function syncTasks() {
+  function isTODOIstTaskOnGoogle(task) {
+    GoogleTasks.forEach(gtask => {
+      if(gtask.notes !== undefined){
+        console.log(gtask.notes.includes(task.id));
+        console.log(task.id+" "+gtask.notes);
+      }
+    });
+    return GoogleTasks.includes(task);
   }
+
+  app.get('/sync', async (req, res) => {
+    TODOIstTasks.forEach(async (task) => {
+      console.log(task);
+      if (!GoogleTasks.includes(task)) {
+        // console.log("Task not found in Google Tasks, adding...");
+      }
+    });
+    await new Promise(r => setTimeout(r, 5000));
+    console.log("#####################")
+    GoogleTasks.forEach(async (task) => {
+      // console.log(task);
+      if (isTODOIstTaskOnGoogle(task)) {
+        // console.log(isTODOIstTaskOnGoogle(task));
+        // console.log("Task not found in Todoist, adding...");
+        // console.log(task);
+      }
+    });
+
+    res.redirect('/');
+  });
+
+  // app.get('/sync', async (req, res) => syncTasks(req,res));
+
+  // async function syncTasks(req, res) {
+  //   getTasksFromGoogle();
+  //   getTasksFromTodoist();
+  //   await new Promise(r => setTimeout(r, 1500));
+  //   TODOIstTasks.forEach((task) => {
+  //     if (!GoogleTasks.includes(task)) {
+  //       console.log("Task not found in Google Tasks, adding...");
+  //     }
+  //   })
+
+  // }
 
 // Start the server
 app.listen(port, () => {
